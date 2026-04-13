@@ -74,7 +74,9 @@ app.use('/api/ai', require('./routes/ai'));
 app.use('/api/payment', require('./routes/payment'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
-
+app.get("/", (req, res) => {
+  res.send("API is running 🚀");
+});
 // ─── MongoDB ───────────────────────────────────────────────────────────────────
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('[DB] MongoDB connected'))
