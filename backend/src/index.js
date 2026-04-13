@@ -11,10 +11,17 @@ const User = require('./models/User');
 const app = express();
 const server = http.createServer(app);
 
-// ─── Socket.IO for realtime auth state ────────────────────────────────────────
+// ✅ Allowed origins (ADD your domains here)
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://pysona-l49a.vercel.app",
+  "https://pysona-l49a-3xecm52tf-aravind163s-projects.vercel.app"
+];
+
+// ─── Socket.IO for realtime auth state ─────────────────────────────
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -51,21 +58,30 @@ io.on('connection', (socket) => {
 // Export io so routes can use it
 app.set('io', io);
 
-// ─── Middleware ────────────────────────────────────────────────────────────────
+// ─── Middleware ───────────────────────────────────────────────────
+
+// ✅ FIXED CORS (supports multiple domains)
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 }));
+
 app.use(express.json());
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 100,
   message: 'Too many requests, please try again later.',
 });
 app.use('/api/', limiter);
 
-// ─── Routes ───────────────────────────────────────────────────────────────────
+// ─── Routes ───────────────────────────────────────────────────────
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/sessions', require('./routes/sessions'));
 app.use('/api/users', require('./routes/users'));
@@ -73,18 +89,25 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/payment', require('./routes/payment'));
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
+// Health + root
+app.get('/api/health', (req, res) =>
+  res.json({ status: 'ok', time: new Date().toISOString() })
+);
+
 app.get("/", (req, res) => {
   res.send("API is running 🚀");
 });
-// ─── MongoDB ───────────────────────────────────────────────────────────────────
+
+// ─── MongoDB ──────────────────────────────────────────────────────
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('[DB] MongoDB connected'))
   .catch((err) => console.error('[DB] Connection error:', err));
 
-// ─── Start ─────────────────────────────────────────────────────────────────────
+// ─── Start ────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`[Server] Running on http://localhost:${PORT}`));
+server.listen(PORT, () =>
+  console.log(`[Server] Running on http://localhost:${PORT}`)
+);
 
-// Export for use in routes (e.g. emit realtime credit updates after session save)
+// Export for use in routes
 module.exports = { io };
