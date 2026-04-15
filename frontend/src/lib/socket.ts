@@ -5,7 +5,7 @@ let socket: Socket | null = null;
 export const connectSocket = (token: string): Socket => {
   if (socket?.connected) return socket;
 
-  socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000', {
+  socket = io(import.meta.env.VITE_SOCKET_URL , {
     auth: { token },
     transports: ['websocket'],
     reconnection: true,
