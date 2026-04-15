@@ -1,19 +1,8 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-// ─── Detect if email is configured ────────────────────────────────────────────
-const isEmailConfigured = () =>
-  !!(process.env.EMAIL_USER && process.env.EMAIL_PASS &&
-     process.env.EMAIL_USER !== 'your_gmail@gmail.com');
-
-const getTransporter = () => {
-  if (!isEmailConfigured()) return null;
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-  });
-};
+const isEmailConfigured = () => !!(process.env.RESEND_API_KEY);
 
 const otpBlock = (otp) => `
   <div style="background:#F9FAFB;border-radius:24px;padding:32px;text-align:center;">
@@ -40,18 +29,17 @@ const wrap = (body) => `
 `;
 
 const sendOTPEmail = async (email, otp) => {
-  const transporter = getTransporter();
-  if (!transporter) {
-    // DEV MODE: log OTP to console instead of sending email
+  if (!isEmailConfigured()) {
     console.log('\n┌─────────────────────────────────────┐');
     console.log(`│  📧 DEV MODE — OTP for ${email}`);
     console.log(`│  🔑 OTP: ${otp}`);
-    console.log('│  (Set EMAIL_USER + EMAIL_PASS to send real emails)');
+    console.log('│  (Set RESEND_API_KEY to send real emails)');
     console.log('└─────────────────────────────────────┘\n');
-    return; // Don't throw — just skip sending
+    return;
   }
-  await transporter.sendMail({
-    from: `"Pysona" <${process.env.EMAIL_USER}>`,
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  await resend.emails.send({
+    from: 'Pysona <onboarding@resend.dev>', // ← change to your domain later
     to: email,
     subject: 'Verify your Pysona account',
     html: wrap(`
@@ -64,16 +52,16 @@ const sendOTPEmail = async (email, otp) => {
 };
 
 const sendForgotPasswordEmail = async (email, otp) => {
-  const transporter = getTransporter();
-  if (!transporter) {
+  if (!isEmailConfigured()) {
     console.log('\n┌─────────────────────────────────────┐');
     console.log(`│  📧 DEV MODE — Password reset OTP for ${email}`);
     console.log(`│  🔑 OTP: ${otp}`);
     console.log('└─────────────────────────────────────┘\n');
     return;
   }
-  await transporter.sendMail({
-    from: `"Pysona" <${process.env.EMAIL_USER}>`,
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  await resend.emails.send({
+    from: 'Pysona <onboarding@resend.dev>', // ← change to your domain later
     to: email,
     subject: 'Reset your Pysona password',
     html: wrap(`

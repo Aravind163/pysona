@@ -114,6 +114,7 @@ export const LoginScreen = ({ onAuthSuccess }: LoginScreenProps) => {
 
   // ── Shared styles ──────────────────────────────────────────────────────────
   const inputCls = "w-full p-5 bg-gray-50 border border-gray-100 rounded-[1.5rem] focus:ring-2 focus:ring-orange-500 outline-none transition-all font-bold text-gray-700 placeholder:text-gray-300";
+  const otpCls = "w-full p-6 bg-gray-50 border border-gray-100 rounded-[1.5rem] text-center text-3xl tracking-[0.4em] font-black focus:ring-2 focus:ring-orange-500 outline-none transition-all shadow-inner placeholder:text-gray-200";
   const btnCls = "w-full py-5 rounded-[1.5rem] text-white font-black shadow-2xl shadow-orange-100 transition-all active:scale-95 uppercase tracking-widest text-sm flex items-center justify-center disabled:opacity-70";
   const Spinner = () => <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin" />;
   const BackBtn = ({ to }: { to: Screen }) => (
@@ -121,11 +122,6 @@ export const LoginScreen = ({ onAuthSuccess }: LoginScreenProps) => {
       className="text-[10px] text-gray-300 font-black uppercase tracking-widest hover:text-gray-500 transition-colors">
       ← Back
     </button>
-  );
-  const OTPInput = () => (
-    <input type="text" maxLength={6} autoFocus placeholder="······"
-      className="w-full p-6 bg-gray-50 border border-gray-100 rounded-[1.5rem] text-center text-3xl tracking-[0.4em] font-black focus:ring-2 focus:ring-orange-500 outline-none transition-all shadow-inner placeholder:text-gray-200"
-      value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} />
   );
 
   return (
@@ -187,7 +183,14 @@ export const LoginScreen = ({ onAuthSuccess }: LoginScreenProps) => {
                 Code sent to <span className="text-gray-900 font-black">{email}</span>
               </p>
             </div>
-            <OTPInput />
+            <input
+              type="text"
+              maxLength={6}
+              placeholder="······"
+              className={otpCls}
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+            />
             <input type="password" placeholder="Create a password (min 6 chars)" autoComplete="new-password"
               className={inputCls} value={password} onChange={(e) => setPassword(e.target.value)} />
             <button type="submit" disabled={isLoading} className={btnCls} style={{ backgroundColor: COLORS.accent }}>
@@ -225,7 +228,14 @@ export const LoginScreen = ({ onAuthSuccess }: LoginScreenProps) => {
                 Reset code sent to <span className="text-gray-900 font-black">{email}</span>
               </p>
             </div>
-            <OTPInput />
+            <input
+              type="text"
+              maxLength={6}
+              placeholder="······"
+              className={otpCls}
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+            />
             <button type="submit" disabled={isLoading} className={btnCls} style={{ backgroundColor: COLORS.accent }}>
               {isLoading ? <Spinner /> : 'Verify Code'}
             </button>
