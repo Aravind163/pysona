@@ -61,8 +61,16 @@ app.set('io', io);
 // ─── Middleware ───────────────────────────────────────────────────
 
 // ✅ FIXED CORS (supports multiple domains)
+// ✅ Replace your existing CORS setup with this exact config
+
 app.use(cors({
-  origin: function (origin, callback) {
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      "https://pysona-lilac.vercel.app",  // ← your exact Vercel URL
+      "http://localhost:3000",             // for local dev
+      "http://localhost:5173",             // if using Vite
+    ];
+
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -70,7 +78,11 @@ app.use(cors({
     }
   },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
+
+app.options("*", cors());
 
 app.use(express.json());
 
