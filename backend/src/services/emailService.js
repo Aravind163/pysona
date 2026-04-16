@@ -2,15 +2,13 @@ const nodemailer = require('nodemailer');
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-const isEmailConfigured = () => !!(process.env.BREVO_SMTP_USER && process.env.BREVO_SMTP_PASS);
+const isEmailConfigured = () => !!(process.env.GMAIL_USER && process.env.GMAIL_PASS);
 
 const createTransporter = () => nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com',
-  port: 587,
-  secure: false,
+  service: 'gmail',
   auth: {
-    user: process.env.BREVO_SMTP_USER,
-    pass: process.env.BREVO_SMTP_PASS,
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS,  // 16-char App Password, NOT your Gmail password
   },
 });
 
@@ -43,13 +41,13 @@ const sendOTPEmail = async (email, otp) => {
     console.log('\n┌─────────────────────────────────────┐');
     console.log(`│  📧 DEV MODE — OTP for ${email}`);
     console.log(`│  🔑 OTP: ${otp}`);
-    console.log('│  (Set BREVO_SMTP_USER and BREVO_SMTP_PASS to send real emails)');
+    console.log('│  (Set GMAIL_USER and GMAIL_PASS to send real emails)');
     console.log('└─────────────────────────────────────┘\n');
     return;
   }
   const transporter = createTransporter();
   await transporter.sendMail({
-    from: '"Pysona" <' + process.env.BREVO_SMTP_USER + '>',
+    from: `"Pysona" <${process.env.GMAIL_USER}>`,
     to: email,
     subject: 'Verify your Pysona account',
     html: wrap(`
@@ -71,7 +69,7 @@ const sendForgotPasswordEmail = async (email, otp) => {
   }
   const transporter = createTransporter();
   await transporter.sendMail({
-    from: '"Pysona" <' + process.env.BREVO_SMTP_USER + '>',
+    from: `"Pysona" <${process.env.GMAIL_USER}>`,
     to: email,
     subject: 'Reset your Pysona password',
     html: wrap(`
