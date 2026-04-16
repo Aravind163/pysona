@@ -11,20 +11,29 @@ const User = require('./models/User');
 const app = express();
 const server = http.createServer(app);
 
-// ✅ Allowed origins (ADD your domains here)
+// ✅ Allowed origins — covers all Vercel preview + production URLs
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://pysona-l49a.vercel.app",
-  "https://pysona-l49a-3xecm52tf-aravind163s-projects.vercel.app"
+  "http://localhost:3000",
+  /^https:\/\/pysona.*\.vercel\.app$/,  // matches ALL pysona vercel deployments
 ];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // allow non-browser / curl
+    const allowed = allowedOrigins.some(o =>
+      typeof o === 'string' ? o === origin : o.test(origin)
+    );
+    allowed ? callback(null, true) : callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
 
 // ─── Socket.IO for realtime auth state ─────────────────────────────
 const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ['GET', 'POST'],
-    credentials: true,
-  },
+  cors: corsOptions,
 });
 
 // Socket auth middleware
@@ -59,30 +68,8 @@ io.on('connection', (socket) => {
 app.set('io', io);
 
 // ─── Middleware ───────────────────────────────────────────────────
-
-// ✅ FIXED CORS (supports multiple domains)
-// ✅ Replace your existing CORS setup with this exact config
-
-app.use(cors({
-  origin: (origin, callback) => {
-    const allowedOrigins = [
-      "https://pysona-lilac.vercel.app",  // ← your exact Vercel URL
-      "http://localhost:3000",             // for local dev
-      "http://localhost:5173",             // if using Vite
-    ];
-
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-}));
-
-app.options("*", cors());
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // handle preflight with same config
 
 app.use(express.json());
 
