@@ -1,8 +1,18 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-const isEmailConfigured = () => !!(process.env.RESEND_API_KEY);
+const isEmailConfigured = () => !!(process.env.BREVO_SMTP_USER && process.env.BREVO_SMTP_PASS);
+
+const createTransporter = () => nodemailer.createTransport({
+  host: 'smtp-relay.brevo.com',
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.BREVO_SMTP_USER,
+    pass: process.env.BREVO_SMTP_PASS,
+  },
+});
 
 const otpBlock = (otp) => `
   <div style="background:#F9FAFB;border-radius:24px;padding:32px;text-align:center;">
@@ -33,13 +43,13 @@ const sendOTPEmail = async (email, otp) => {
     console.log('\n┌─────────────────────────────────────┐');
     console.log(`│  📧 DEV MODE — OTP for ${email}`);
     console.log(`│  🔑 OTP: ${otp}`);
-    console.log('│  (Set RESEND_API_KEY to send real emails)');
+    console.log('│  (Set BREVO_SMTP_USER and BREVO_SMTP_PASS to send real emails)');
     console.log('└─────────────────────────────────────┘\n');
     return;
   }
-  const resend = new Resend(process.env.RESEND_API_KEY);
-  await resend.emails.send({
-    from: 'Pysona <onboarding@resend.dev>', // ← change to your domain later
+  const transporter = createTransporter();
+  await transporter.sendMail({
+    from: '"Pysona" <' + process.env.BREVO_SMTP_USER + '>',
     to: email,
     subject: 'Verify your Pysona account',
     html: wrap(`
@@ -59,9 +69,9 @@ const sendForgotPasswordEmail = async (email, otp) => {
     console.log('└─────────────────────────────────────┘\n');
     return;
   }
-  const resend = new Resend(process.env.RESEND_API_KEY);
-  await resend.emails.send({
-    from: 'Pysona <onboarding@resend.dev>', // ← change to your domain later
+  const transporter = createTransporter();
+  await transporter.sendMail({
+    from: '"Pysona" <' + process.env.BREVO_SMTP_USER + '>',
     to: email,
     subject: 'Reset your Pysona password',
     html: wrap(`
