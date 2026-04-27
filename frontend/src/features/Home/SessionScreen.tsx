@@ -39,6 +39,14 @@ export const SessionScreen = () => {
     if (sessionState === SessionState.ENDED) return;
     stopListening();
     stopSpeaking();
+
+    // ✅ FIX: If no messages were exchanged, end silently without deducting a credit
+    if (history.length === 0) {
+      setSessionState(SessionState.IDLE);
+      navigate('/');
+      return;
+    }
+
     setSessionState(SessionState.THINKING);
     try {
       const summaryData = await generateSessionSummary(sessionLog.join('\n'));
@@ -95,16 +103,8 @@ export const SessionScreen = () => {
     }
   }, [history, onboardingData, speak, stopListening, clearTranscript, handleEndSession, showToast, sessionState]);
 
-  // Silence auto-submit (voice mode)
-  useEffect(() => {
-    const handleSilence = (e: any) => {
-      const text = e.detail?.text || transcriptRef.current;
-      if (sessionState === SessionState.LISTENING && text.trim()) processUserInput(text);
-    };
-    const rec = recognitionRef.current;
-    if (rec) rec.addEventListener('pysona-silence-submit', handleSilence);
-    return () => { if (rec) rec.removeEventListener('pysona-silence-submit', handleSilence); };
-  }, [sessionState, processUserInput, recognitionRef, transcriptRef]);
+  // ✅ FIX: Silence auto-submit is now handled inside useVoice via onSilenceSubmitRef,
+  // so we no longer need a stale-closure-prone event listener here.
 
   // Inactivity check-in
   useEffect(() => {
@@ -149,7 +149,8 @@ export const SessionScreen = () => {
       case SessionState.IDLE:
         setAiText('');
         setSessionState(SessionState.LISTENING);
-        startListening();
+        // ✅ FIX: Pass processUserInput as the silence callback — always fresh, never stale
+        startListening(processUserInput);
         break;
       case SessionState.LISTENING:
         if (transcript.trim()) processUserInput(transcript);

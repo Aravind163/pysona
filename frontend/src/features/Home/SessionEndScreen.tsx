@@ -7,7 +7,13 @@ export const SessionEndScreen = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const summary = location.state?.summary;
+  // ✅ FIX: Always guarantee summary data — never render a blank screen
+  const rawSummary = location.state?.summary;
+  const summary = {
+    summary: rawSummary?.summary || 'We shared some meaningful thoughts today.',
+    reflection: rawSummary?.reflection || 'It takes courage to be open about how you feel.',
+    groundingLine: rawSummary?.groundingLine || 'Carry this peace into your evening.',
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white">
@@ -22,8 +28,7 @@ export const SessionEndScreen = () => {
         <h1 className="text-3xl font-black text-gray-900 mb-3 tracking-tight">Session Complete</h1>
         <p className="text-gray-400 text-sm font-medium mb-10">Here's a reflection from today's conversation</p>
 
-        {summary && (
-          <div className="space-y-4 mb-10 text-left">
+        <div className="space-y-4 mb-10 text-left">
             <div className="bg-gray-50 rounded-[1.5rem] p-6 border border-gray-100">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Summary</p>
               <p className="text-gray-700 font-medium leading-relaxed">{summary.summary}</p>
@@ -37,7 +42,6 @@ export const SessionEndScreen = () => {
               <p className="text-gray-600 italic leading-relaxed">"{summary.groundingLine}"</p>
             </div>
           </div>
-        )}
 
         {/* Credits remaining */}
         <div className="flex items-center justify-center gap-2 mb-8 text-sm text-gray-400">
@@ -62,5 +66,6 @@ export const SessionEndScreen = () => {
         </div>
       </div>
     </div>
+  
   );
 };

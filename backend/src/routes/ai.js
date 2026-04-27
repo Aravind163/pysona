@@ -3,11 +3,9 @@ const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
 
 router.use(authMiddleware);
-
 const GEMINI_URL = (apiKey) =>
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
-// Retry with exponential backoff on 429
 const callGemini = async (apiKey, payload, retries = 3) => {
   for (let attempt = 0; attempt <= retries; attempt++) {
     const res = await fetch(GEMINI_URL(apiKey), {

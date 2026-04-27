@@ -1,9 +1,9 @@
 import api from '../lib/api';
 import { OnboardingData } from '../types';
 
-// Cooldown tracker — prevent sending faster than 1 request per 4 seconds
+// Cooldown — free Gemini tier = 15 RPM max. 5s gap stays safely under limit.
 let lastRequestTime = 0;
-const MIN_GAP_MS = 4000;
+const MIN_GAP_MS = 5000;
 
 export const generateAIResponse = async (
   userInput: string,
@@ -18,18 +18,29 @@ export const generateAIResponse = async (
   }
   lastRequestTime = Date.now();
 
+  const payload = {
+    userInput,
+    history: history.slice(-20),
+    onboardingData,
+  };
+
   try {
-    const { data } = await api.post('/ai/chat', {
-      userInput,
-      history: history.slice(-20),
-      onboardingData,
-    });
+    const { data } = await api.post('/ai/chat', payload);
     return { text: data.text || "I'm right here with you.", isSafetyTriggered: !!data.isSafetyTriggered };
   } catch (err: any) {
     const status = err?.response?.status;
     const msg = err?.response?.data?.message;
 
-    if (status === 429) throw new Error('AI is busy. Please wait a moment and try again.');
+    if (status === 429) {
+      // Auto-retry once after 15s on rate limit before giving up
+      await new Promise(r => setTimeout(r, 15000));
+      try {
+        const { data } = await api.post('/ai/chat', payload);
+        return { text: data.text || "I'm right here with you.", isSafetyTriggered: !!data.isSafetyTriggered };
+      } catch {
+        throw new Error('AI is busy. Please wait 30 seconds and try again.');
+      }
+    }
     if (status === 502) throw new Error(msg || 'AI service error. Check your Gemini API key.');
     if (status === 500) throw new Error(msg || 'Server error. Make sure backend is running.');
     throw new Error(msg || 'Connection failed. Is your backend running on port 5000?');

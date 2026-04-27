@@ -42,6 +42,11 @@ router.post('/', async (req, res) => {
       return res.status(402).json({ message: 'Insufficient credits. Purchase more to continue.', credits: user.credits });
     }
 
+    // ✅ FIX: Don't deduct credit for empty/zero-duration sessions
+    if (!durationSeconds || durationSeconds < 5) {
+      return res.status(400).json({ message: 'Session too short to save. No credit deducted.' });
+    }
+
     // Create session
     const session = await Session.create({
       userId: user._id,
